@@ -86,6 +86,8 @@
 
 - (void)loadAd
 {
+     //Clear cache before loading ad (for ad dev)
+    [[NSURLCache sharedURLCache] removeAllCachedResponses];
     [self.manager loadInterstitialWithAdUnitID:self.adUnitId
                                       keywords:self.keywords
                                       location:self.location
