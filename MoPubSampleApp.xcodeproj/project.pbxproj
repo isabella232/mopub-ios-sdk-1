@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		4604B7BC1A002F0A002234E9 /* MoPubSampleApp with CEs-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 4604B7BB1A002F0A002234E9 /* MoPubSampleApp with CEs-Info.plist */; };
 		462E156F17F0F5D100408E17 /* MPMRectBannerAdDetailViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 462E156E17F0F5D100408E17 /* MPMRectBannerAdDetailViewController.m */; };
 		467343F017FE3D6900D68BB6 /* MPAdPersistenceManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 467343EF17FE3D6900D68BB6 /* MPAdPersistenceManager.m */; };
 		469A15F01AC1F0BA00D6F0EF /* MPSampleAppLogReader.m in Sources */ = {isa = PBXBuildFile; fileRef = 469A15EF1AC1F0BA00D6F0EF /* MPSampleAppLogReader.m */; };
@@ -2485,7 +2484,7 @@
 		AE23238716F78A17002C2082 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0460;
+				LastUpgradeCheck = 0720;
 				ORGANIZATIONNAME = MoPub;
 			};
 			buildConfigurationList = AE23238A16F78A17002C2082 /* Build configuration list for PBXProject "MoPubSampleApp" */;
@@ -2621,7 +2620,6 @@
 				B228D33E1B8FB57300123DD0 /* MPCloseBtn.png in Resources */,
 				B257A2F21BA38F1200F5D320 /* MPUnmutedBtn@3x.png in Resources */,
 				4ADE5FB21B4FBC7E004C3673 /* UnityAds.bundle in Resources */,
-				4604B7BC1A002F0A002234E9 /* MoPubSampleApp with CEs-Info.plist in Resources */,
 				B20C81471BB21B50007F0E45 /* MPDAAIcon@2x.png in Resources */,
 				57D3225A1BD9946A00ACF21E /* TapjoyResources.bundle in Resources */,
 				46B3342819F075680078078A /* MPManualAdViewController.xib in Resources */,
@@ -3206,6 +3204,7 @@
 					"$(PROJECT_DIR)/AdNetworkSupport/InMobi/SDK",
 				);
 				OTHER_LDFLAGS = "-ObjC";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.mopub.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "MoPubSampleApp with CEs";
 				USER_HEADER_SEARCH_PATHS = "";
 				WRAPPER_EXTENSION = app;
@@ -3243,6 +3242,7 @@
 					"$(PROJECT_DIR)/AdNetworkSupport/InMobi/SDK",
 				);
 				OTHER_LDFLAGS = "-ObjC";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.mopub.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "MoPubSampleApp with CEs";
 				USER_HEADER_SEARCH_PATHS = "";
 				WRAPPER_EXTENSION = app;
@@ -3263,6 +3263,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				COPY_PHASE_STRIP = NO;
+				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_OPTIMIZATION_LEVEL = 0;
@@ -3334,6 +3335,7 @@
 					"$(PROJECT_DIR)/AdNetworkSupport/InMobi/SDK",
 				);
 				OTHER_LDFLAGS = "-ObjC";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.mopub.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				USER_HEADER_SEARCH_PATHS = "";
 				WRAPPER_EXTENSION = app;
@@ -3366,6 +3368,7 @@
 					"$(PROJECT_DIR)/AdNetworkSupport/InMobi/SDK",
 				);
 				OTHER_LDFLAGS = "-ObjC";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.mopub.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				USER_HEADER_SEARCH_PATHS = "";
 				WRAPPER_EXTENSION = app;
