@@ -2,8 +2,11 @@
 #import <CoreLocation/CoreLocation.h>
 #import "MPAdServerURLBuilder.h"
 #import "MPAdConfigurationFactory.h"
-#import "MPLegacyInterstitialCustomEventAdapter.h"
 #import "MPInterstitialAdManagerDelegate.h"
+#import "MPLogEventRecorder.h"
+#import "MPLogEvent.h"
+#import "FakeMPLogEventRecorder.h"
+#import "NSDate+MPSpecs.h"
 
 using namespace Cedar::Matchers;
 using namespace Cedar::Doubles;
@@ -15,8 +18,12 @@ describe(@"MPInterstitialAdManager", ^{
     __block id<CedarDouble, MPInterstitialAdManagerDelegate> delegate;
     __block FakeMPAdServerCommunicator *communicator;
     __block MPAdConfiguration *configuration;
+    __block FakeMPLogEventRecorder *eventRecorder;
 
     beforeEach(^{
+        eventRecorder = [[FakeMPLogEventRecorder alloc] init];
+        spy_on(eventRecorder);
+        fakeCoreProvider.fakeLogEventRecorder = eventRecorder;
         delegate = nice_fake_for(@protocol(MPInterstitialAdManagerDelegate));
         manager = [[MPInterstitialAdManager alloc] initWithDelegate:delegate];
         communicator = fakeCoreProvider.lastFakeMPAdServerCommunicator;
@@ -47,13 +54,26 @@ describe(@"MPInterstitialAdManager", ^{
 
     context(@"when told to load an interstitial", ^{
         __block CLLocation *location;
+        __block NSString *url;
 
         beforeEach(^{
+            // We swizzle the date here because the URL string's value (location's age in seconds) depends on the current time. We're just making sure
+            // the same date is always returned for all calls to [NSDate date] so it's easier to test URLs against one another.
+            [NSDate mp_swizzleDateMethod];
+            [NSDate mp_setFakeDate:[NSDate dateWithTimeIntervalSinceReferenceDate:1000]];
+
             location = [[CLLocation alloc] initWithLatitude:50 longitude:50];
+
+            [NSDate mp_setFakeDate:[NSDate dateWithTimeIntervalSinceReferenceDate:2000]];
             [manager loadInterstitialWithAdUnitID:@"1138"
                                          keywords:@"hi=2,ho=3"
                                          location:location
                                           testing:YES];
+            url = communicator.loadedURL.absoluteString;
+        });
+
+        afterEach(^{
+            [NSDate mp_swizzleDateMethod];
         });
 
         it(@"should request an ad", ^{
@@ -76,15 +96,26 @@ describe(@"MPInterstitialAdManager", ^{
             it(@"should make an appropriate adapter and ask it to fetch the ad", ^{
                 adapter.configurationForLastRequest should equal(configuration);
             });
+
+            it(@"should add an event with data from the request", ^{
+                eventRecorder should_not have_received(@selector(addEvent:));
+            });
         });
 
         context(@"when the ad request fails", ^{
+            __block NSError *error;
+
             beforeEach(^{
-                [communicator failWithError:nil];
+                error = [NSError errorWithDomain:NSURLErrorDomain code:NSURLErrorTimedOut userInfo:nil];
+                [communicator failWithError:error];
             });
 
             it(@"should notify the delegate", ^{
-                delegate should have_received(@selector(manager:didFailToLoadInterstitialWithError:)).with(manager).and_with(nil);
+                delegate should have_received(@selector(manager:didFailToLoadInterstitialWithError:)).with(manager).and_with(error);
+            });
+
+            it(@"should log an unsuccessful latency event", ^{
+                eventRecorder should_not have_received(@selector(addEvent:));
             });
 
             itShouldBehaveLike(@"a manager that is able to handle a new interstitial request");
@@ -103,7 +134,20 @@ describe(@"MPInterstitialAdManager", ^{
             });
 
             it(@"should tell its delegate that the interstitial failed", ^{
-                delegate should have_received(@selector(manager:didFailToLoadInterstitialWithError:)).with(manager).and_with(nil);
+                delegate should have_received(@selector(manager:didFailToLoadInterstitialWithError:));
+            });
+
+            itShouldBehaveLike(@"a manager that is able to handle a new interstitial request");
+        });
+
+        context(@"when the configuration indicates the ad unit is warming up", ^{
+            beforeEach(^{
+                configuration = [MPAdConfigurationFactory defaultInterstitialConfigurationWithHeaders:@{@"X-Warmup":@"1"} HTMLString:nil];
+                [communicator receiveConfiguration:configuration];
+            });
+
+            it(@"should tell its delegate that the interstitial failed", ^{
+                delegate should have_received(@selector(manager:didFailToLoadInterstitialWithError:));
             });
 
             itShouldBehaveLike(@"a manager that is able to handle a new interstitial request");
@@ -251,72 +295,6 @@ describe(@"MPInterstitialAdManager", ^{
         });
     });
 
-    describe(@"when notified about legacy custom event status", ^{
-        context(@"when not actually managing a legacy custom event", ^{
-            __block FakeInterstitialAdapter *adapter;
-
-            beforeEach(^{
-                [manager loadInterstitialWithAdUnitID:@"gimme_adapter" keywords:@"" location:nil testing:YES];
-                adapter = [[FakeInterstitialAdapter alloc] init];
-                fakeProvider.fakeInterstitialAdapter = adapter;
-
-                configuration = [MPAdConfigurationFactory defaultFakeInterstitialConfiguration];
-                [communicator receiveConfiguration:configuration];
-            });
-
-            it(@"should not explode", ^{
-                [manager customEventDidLoadAd];
-                [manager customEventDidFailToLoadAd];
-                [manager customEventActionWillBegin];
-            });
-        });
-
-        context(@"when actually managing a legacy custom event", ^{
-            __block MPLegacyInterstitialCustomEventAdapter<CedarDouble> *adapter;
-
-            beforeEach(^{
-                adapter = nice_fake_for([MPLegacyInterstitialCustomEventAdapter class]);
-                fakeProvider.fakeInterstitialAdapter = adapter;
-
-                [manager loadInterstitialWithAdUnitID:@"gimme_adapter" keywords:@"" location:nil testing:YES];
-                [communicator receiveConfiguration:configuration];
-            });
-
-            itShouldBehaveLike(@"a manager that is in the midst of loading an interstitial");
-
-            context(@"and the custom event loaded", ^{
-                beforeEach(^{
-                    [manager customEventDidLoadAd];
-                });
-
-                it(@"should inform the legacy adapter", ^{
-                    adapter should have_received(@selector(customEventDidLoadAd));
-                });
-
-                itShouldBehaveLike(@"a manager that is able to handle a new interstitial request");
-            });
-
-            context(@"and the custom event failed to load", ^{
-                beforeEach(^{
-                    [manager customEventDidFailToLoadAd];
-                });
-
-                it(@"should inform the legacy adapter", ^{
-                    adapter should have_received(@selector(customEventDidFailToLoadAd));
-                });
-
-                itShouldBehaveLike(@"a manager that is able to handle a new interstitial request");
-            });
-
-            context(@"and the custom event action will begin", ^{
-                it(@"should inform the legacy adapter", ^{
-                    [manager customEventActionWillBegin];
-                    adapter should have_received(@selector(customEventActionWillBegin));
-                });
-            });
-        });
-    });
-
     describe(@"when asked to load a configuration that is not an interstitial", ^{
         beforeEach(^{
             [manager loadInterstitialWithAdUnitID:@"banner_id" keywords:@"" location:nil testing:YES];
@@ -327,7 +305,7 @@ describe(@"MPInterstitialAdManager", ^{
         it(@"should not load anything, and should inform the delegate that it failed", ^{
             // It should not try to fail over.
             communicator.loadedURL should be_nil;
-            delegate should have_received(@selector(manager:didFailToLoadInterstitialWithError:)).with(manager).and_with(nil);
+            delegate should have_received(@selector(manager:didFailToLoadInterstitialWithError:));
         });
 
         itShouldBehaveLike(@"a manager that is able to handle a new interstitial request");

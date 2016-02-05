@@ -17,12 +17,14 @@ UIWindow *MPKeyWindow(void);
 CGFloat MPStatusBarHeight(void);
 CGRect MPApplicationFrame(void);
 CGRect MPScreenBounds(void);
+CGSize MPScreenResolution(void);
 CGFloat MPDeviceScaleFactor(void);
 NSDictionary *MPDictionaryFromQueryString(NSString *query);
 NSString *MPSHA1Digest(NSString *string);
 BOOL MPViewIsVisible(UIView *view);
 BOOL MPViewIntersectsParentWindowWithPercent(UIView *view, CGFloat percentVisible);
 NSString *MPResourcePathForResource(NSString *resourceName);
+NSArray *MPConvertStringArrayToURLArray(NSArray *strArray);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -44,6 +46,8 @@ NSString *MPResourcePathForResource(NSString *resourceName);
 #define MP_IOS_5_1  50100
 #define MP_IOS_6_0  60000
 #define MP_IOS_7_0  70000
+#define MP_IOS_8_0  80000
+#define MP_IOS_9_0  90000
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -69,7 +73,7 @@ typedef NSUInteger MPInterstitialOrientationType;
 /*
  * Returns string with reserved/unsafe characters encoded.
  */
-- (NSString *)URLEncodedString;
+- (NSString *)mp_URLEncodedString;
 
 @end
 
@@ -77,9 +81,7 @@ typedef NSUInteger MPInterstitialOrientationType;
 
 @interface UIDevice (MPAdditions)
 
-- (NSString *)hardwareDeviceName;
-- (BOOL)supportsOrientationMask:(UIInterfaceOrientationMask)orientationMask;
-- (BOOL)doesOrientation:(UIInterfaceOrientation)orientation matchOrientationMask:(UIInterfaceOrientationMask)orientationMask;
+- (NSString *)mp_hardwareDeviceName;
 
 @end
 
@@ -89,6 +91,8 @@ typedef NSUInteger MPInterstitialOrientationType;
 
 // Correct way to hide/show the status bar on pre-ios 7.
 - (void)mp_preIOS7setApplicationStatusBarHidden:(BOOL)hidden;
+- (BOOL)mp_supportsOrientationMask:(UIInterfaceOrientationMask)orientationMask;
+- (BOOL)mp_doesOrientation:(UIInterfaceOrientation)orientation matchOrientationMask:(UIInterfaceOrientationMask)orientationMask;
 
 @end
 

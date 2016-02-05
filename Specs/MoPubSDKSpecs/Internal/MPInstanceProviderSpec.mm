@@ -2,10 +2,8 @@
 #import "MPAdConfigurationFactory.h"
 #import "FakeInterstitialCustomEvent.h"
 #import "MPInterstitialCustomEventAdapter.h"
-#import "MPLegacyInterstitialCustomEventAdapter.h"
 #import "MPReachability.h"
 #import "MPBannerCustomEventAdapter.h"
-#import "MPLegacyBannerCustomEventAdapter.h"
 #import "MPAnalyticsTracker.h"
 #import "MPHTMLInterstitialViewController.h"
 
@@ -45,11 +43,11 @@ describe(@"MPInstanceProvider", ^{
             });
 
             context(@"when the configuration has a custom selector name", ^{
-                it(@"should return an MPLegacyInterstitialCustomEventAdapter", ^{
+                it(@"should return nil", ^{
                     configuration = [MPAdConfigurationFactory defaultInterstitialConfigurationWithNetworkType:@"custom"];
                     configuration.customSelectorName = @"buildTheThing";
                     [provider buildInterstitialAdapterForConfiguration:configuration
-                                                              delegate:nil] should be_instance_of([MPLegacyInterstitialCustomEventAdapter class]);
+                                                              delegate:nil] should be_nil;
                 });
             });
 
@@ -92,11 +90,11 @@ describe(@"MPInstanceProvider", ^{
             });
 
             context(@"when the configuration has a custom selector name", ^{
-                it(@"should return an MPLegacyInterstitialCustomEventAdapter", ^{
+                it(@"should return nil", ^{
                     configuration = [MPAdConfigurationFactory defaultBannerConfigurationWithNetworkType:@"custom"];
                     configuration.customSelectorName = @"buildTheThing";
                     [provider buildBannerAdapterForConfiguration:configuration
-                                                        delegate:nil] should be_instance_of([MPLegacyBannerCustomEventAdapter class]);
+                                                        delegate:nil] should be_nil;
                 });
             });
 
@@ -121,13 +119,10 @@ describe(@"MPInstanceProvider", ^{
     describe(@"providing an HTML interstitial view controller", ^{
         it(@"should provide a correctly configured interstitial view controller", ^{
             id<CedarDouble, MPInterstitialViewControllerDelegate> delegate = nice_fake_for(@protocol(MPInterstitialViewControllerDelegate));
-            id customMethodDelegate = [[NSObject alloc] init];
             MPHTMLInterstitialViewController *controller = [provider buildMPHTMLInterstitialViewControllerWithDelegate:delegate
-                                                                                                       orientationType:MPInterstitialOrientationTypePortrait
-                                                                                                  customMethodDelegate:customMethodDelegate];
+                                                                                                       orientationType:MPInterstitialOrientationTypePortrait];
             controller.delegate should equal(delegate);
             controller.orientationType should equal(MPInterstitialOrientationTypePortrait);
-            controller.customMethodDelegate should equal(customMethodDelegate);
         });
     });
 });

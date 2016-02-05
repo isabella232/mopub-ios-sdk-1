@@ -16,6 +16,7 @@
 #import "MPCoreInstanceProvider.h"
 #import "MPInterstitialAdManagerDelegate.h"
 #import "MPLogging.h"
+#import "MPError.h"
 
 @interface MPInterstitialAdManager ()
 
@@ -125,17 +126,24 @@
 
     MPLogInfo(@"Interstitial ad view is fetching ad network type: %@", self.configuration.networkType);
 
+    if (self.configuration.adUnitWarmingUp) {
+        MPLogInfo(kMPWarmingUpErrorLogFormatWithAdUnitID, self.delegate.interstitialAdController.adUnitId);
+        self.loading = NO;
+        [self.delegate manager:self didFailToLoadInterstitialWithError:[MPError errorWithCode:MPErrorAdUnitWarmingUp]];
+        return;
+    }
+
     if ([self.configuration.networkType isEqualToString:kAdTypeClear]) {
         MPLogInfo(kMPClearErrorLogFormatWithAdUnitID, self.delegate.interstitialAdController.adUnitId);
         self.loading = NO;
-        [self.delegate manager:self didFailToLoadInterstitialWithError:nil];
+        [self.delegate manager:self didFailToLoadInterstitialWithError:[MPError errorWithCode:MPErrorNoInventory]];
         return;
     }
 
     if (self.configuration.adType != MPAdTypeInterstitial) {
         MPLogWarn(@"Could not load ad: interstitial object received a non-interstitial ad unit ID.");
         self.loading = NO;
-        [self.delegate manager:self didFailToLoadInterstitialWithError:nil];
+        [self.delegate manager:self didFailToLoadInterstitialWithError:[MPError errorWithCode:MPErrorAdapterInvalid]];
         return;
     }
 
@@ -214,34 +222,6 @@
 - (void)interstitialWillLeaveApplicationForAdapter:(MPBaseInterstitialAdapter *)adapter
 {
     //noop
-}
-
-#pragma mark - Legacy Custom Events
-
-- (void)customEventDidLoadAd
-{
-    // XXX: The deprecated custom event behavior is to report an impression as soon as an ad loads,
-    // rather than when the ad is actually displayed. Because of this, you may see impression-
-    // reporting discrepancies between MoPub and your custom ad networks.
-    if ([self.adapter respondsToSelector:@selector(customEventDidLoadAd)]) {
-        self.loading = NO;
-        [self.adapter performSelector:@selector(customEventDidLoadAd)];
-    }
-}
-
-- (void)customEventDidFailToLoadAd
-{
-    if ([self.adapter respondsToSelector:@selector(customEventDidFailToLoadAd)]) {
-        self.loading = NO;
-        [self.adapter performSelector:@selector(customEventDidFailToLoadAd)];
-    }
-}
-
-- (void)customEventActionWillBegin
-{
-    if ([self.adapter respondsToSelector:@selector(customEventActionWillBegin)]) {
-        [self.adapter performSelector:@selector(customEventActionWillBegin)];
-    }
 }
 
 @end
