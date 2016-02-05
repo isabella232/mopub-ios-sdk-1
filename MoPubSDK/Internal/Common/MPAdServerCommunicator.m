@@ -59,6 +59,8 @@ const NSTimeInterval kRequestTimeoutInterval = 10.0;
 - (void)loadURL:(NSURL *)URL
 {
     [self cancel];
+    //Clear cache before loading ad (for ad dev)
+    [[NSURLCache sharedURLCache] removeAllCachedResponses];
     self.URL = URL;
     self.connection = [NSURLConnection connectionWithRequest:[self adRequestForURL:URL]
                                                     delegate:self];
